@@ -13,4 +13,7 @@ var (
 
 	C, _       = lightclient.DialMockContext(context.Background(), "http://localhost:9000")
 	MockClient = interface{}(C.GetRawClient()).(*mocking.MockClient)
+
+	Enable  = true
+	Disable = false
 )
