@@ -63,7 +63,7 @@ func checkGetTransactionsResponse(txsResponse *indexer.TxsWithCell) {
 	gomega.Expect(blockResponse.Transactions[txsResponse.Objects[0].TxIndex], txsResponse.Objects[0].TxHash)
 
 	// query cell CodeHash && HashType is right ,skip arg
-	txResponse, err := sdk.Client.GetTransaction(sdk.Ctx, txsResponse.Objects[0].TxHash)
+	txResponse, err := sdk.Client.GetTransaction(sdk.Ctx, txsResponse.Objects[0].TxHash, &sdk.Enable)
 	if txsResponse.Objects[0].IoType == indexer.IOTypeIn {
 		cellInput := txResponse.Transaction.Inputs[txsResponse.Objects[0].IoIndex]
 		cellOutPut, err := getCellOutputByHashAndIdx(cellInput.PreviousOutput.TxHash, cellInput.PreviousOutput.Index)

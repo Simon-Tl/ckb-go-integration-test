@@ -14,4 +14,5 @@ func TestGetBlockByNumber(t *testing.T) {
 		}
 		assert.NotNil(t, block.Transactions)
 	})
+
 }

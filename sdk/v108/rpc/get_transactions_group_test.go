@@ -71,7 +71,7 @@ func checkGetTransactionsGroupedResponse(txsResponse *indexer.TxsWithCells) {
 	gomega.Expect(blockResponse.Transactions[txsResponse.Objects[0].TxIndex], txsResponse.Objects[0].TxHash)
 
 	// query cell CodeHash && HashType is right ,skip arg
-	txResponse, err := sdk.Client.GetTransaction(sdk.Ctx, txsResponse.Objects[0].TxHash)
+	txResponse, err := sdk.Client.GetTransaction(sdk.Ctx, txsResponse.Objects[0].TxHash, &sdk.Enable)
 	if txsResponse.Objects[0].Cells[0].IoType == indexer.IOTypeIn {
 		cellInput := txResponse.Transaction.Inputs[txsResponse.Objects[0].Cells[0].IoIndex]
 		cellOutPut, err := getCellOutputByHashAndIdx(cellInput.PreviousOutput.TxHash, cellInput.PreviousOutput.Index)
@@ -87,7 +87,7 @@ func checkGetTransactionsGroupedResponse(txsResponse *indexer.TxsWithCells) {
 
 }
 func getCellOutputByHashAndIdx(txHash types.Hash, idx uint32) (*types.CellOutput, error) {
-	tx, err := sdk.Client.GetTransaction(sdk.Ctx, txHash)
+	tx, err := sdk.Client.GetTransaction(sdk.Ctx, txHash, &sdk.Enable)
 	if err != nil {
 		return nil, err
 	}

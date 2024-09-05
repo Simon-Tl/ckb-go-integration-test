@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetTransaction(t *testing.T) {
-
+	enable := true
 	//todo wait https://github.com/nervosnetwork/ckb-sdk-go/pull/203 merged
 	t.Run("GetTransaction", func(t *testing.T) {
 		header, err := sdk.Client.GetTipHeader(sdk.Ctx)
@@ -19,7 +19,7 @@ func TestGetTransaction(t *testing.T) {
 			return
 		}
 		hash := block.Transactions[0].Hash
-		transaction, err2 := sdk.Client.GetTransaction(sdk.Ctx, hash)
+		transaction, err2 := sdk.Client.GetTransaction(sdk.Ctx, hash, &enable)
 		if err2 != nil {
 			return
 		}
