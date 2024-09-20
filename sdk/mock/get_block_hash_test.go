@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"fmt"
 	"github.com/onsi/gomega"
 	"testing"
 )
@@ -13,36 +12,35 @@ func TestGetBlockHash(t *testing.T) {
 		g := gomega.NewGomegaWithT(t) // Initialize Gomega
 		println(t.Name())
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client")
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed")
 		// Identifiable description for the expectation		fmt.Println(mockData.Request.Params)
 
-		Parms, err := interfaceToUint(mockData.Request.Params[0])
-		ParmUint64 := uint64(Parms)
-		info, err := client.GetBlockHash(context.Background(), ParmUint64)
+		mockParams, err := interfaceToUint(mockData.Request.Params[0])
+		g.Expect(err).To(gomega.BeNil(), "mockParams interfaceToUint failed")
+
+		info, err := client.GetBlockHash(context.Background(), uint64(mockParams))
 		g.Expect(err).To(gomega.BeNil(), "GetBlockHash failed")
-		fmt.Println(info)
-		fmt.Println(mockData.Response.Result)
-		g.Expect(info.Hex()).To(gomega.Equal(mockData.Response.Result.(string)))
+
+		g.Expect(info.Hex()).To(gomega.Equal(mockData.Response.Result.(string)), "Result Unequal")
 
 	})
 
 	t.Run("get_block_hash/null", func(t *testing.T) {
-		g := gomega.NewGomegaWithT(t) // Initialize Gomega
+		g := gomega.NewGomegaWithT(t)
 		println(t.Name())
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client")
-		// Identifiable description for the expectation		fmt.Println(mockData.Request.Params)
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed")
 
-		Parms, err := interfaceToUint(mockData.Request.Params[0])
-		ParmUint64 := uint64(Parms)
-		info, err := client.GetBlockHash(context.Background(), ParmUint64)
+		mockParams, err := interfaceToUint(mockData.Request.Params[0])
+		g.Expect(err).To(gomega.BeNil(), "mockParams interfaceToUint failed")
+
+		info, err := client.GetBlockHash(context.Background(), uint64(mockParams))
 		g.Expect(err).To(gomega.BeNil(), "GetBlockHash failed")
-		fmt.Println(info)
+
 		if mockData.Response.Result == nil {
 			mockData.Response.Result = "0x0000000000000000000000000000000000000000000000000000000000000000"
-			g.Expect(info.Hex()).To(gomega.Equal(mockData.Response.Result))
+			g.Expect(info.Hex()).To(gomega.Equal(mockData.Response.Result), "Result Unequal")
 		}
-		//g.Expect(info.Hex()).To(gomega.Equal(mockData.Response.Result.(string)))
 
 	})
 }

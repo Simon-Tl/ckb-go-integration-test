@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-func TestEstimateCycles(t *testing.T) {
-	t.Run("estimate_cycles/[tx]", func(t *testing.T) {
+func TestDryRunTransaction(t *testing.T) {
+	t.Run("dry_run_transaction/[tx]", func(t *testing.T) {
 		g := gomega.NewGomegaWithT(t)
 		println("Running test case:", t.Name())
 		client, mockData, err := getMockRpcClientByName(t.Name())
@@ -49,16 +49,17 @@ func TestEstimateCycles(t *testing.T) {
 			Witnesses:   WitnessesBytes,
 		}
 
-		info, err := client.EstimateCycles(context.Background(), &tx)
-		g.Expect(err).To(gomega.BeNil(), "EstimateCycles failed")
+		info, err := client.DryRunTransaction(context.Background(), &tx)
+		g.Expect(err).To(gomega.BeNil(), "DryRunTransaction failed")
 
 		mockResult, err := interfaceToMapString(mockData.Response.Result)
-		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString failed")
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString")
 
 		mockCyclesResult, err := interfaceToUint(mockResult["cycles"])
-		g.Expect(err).To(gomega.BeNil(), "mockCyclesResult interfaceToUint failed")
+		g.Expect(err).To(gomega.BeNil(), "mockCyclesResult interfaceToMapString")
 
-		g.Expect(info.Cycles).To(gomega.Equal(uint64(mockCyclesResult)), "Result Unequal")
+		g.Expect(info.Cycles).To(gomega.Equal(uint64(mockCyclesResult)), "Cycles Unequal")
+
 		fmt.Println(info.Cycles, uint64(mockCyclesResult))
 
 	})

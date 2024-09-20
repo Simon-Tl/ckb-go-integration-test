@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// 缺少“extension”返回值
 func TestGetBlock(t *testing.T) {
 	t.Run("get_block/extension2", func(t *testing.T) {
 		g := gomega.NewGomegaWithT(t)
@@ -17,16 +18,17 @@ func TestGetBlock(t *testing.T) {
 		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed")
 
 		info, err := client.GetBlock(context.Background(), types.HexToHash(mockData.Request.Params[0].(string)))
-		g.Expect(err).To(gomega.BeNil(), "client.GetBlock failed")
+		g.Expect(err).To(gomega.BeNil(), "GetBlock failed")
 
-		localresult, err := interfaceToMapString(mockData.Response.Result)
-		localheader, err := interfaceToMapString(localresult["header"])
-		g.Expect(err).To(gomega.BeNil(), "localheader interfaceToMapString failed")
+		mockResult, err := interfaceToMapString(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString failed")
 
-		g.Expect(info.Header.Hash.String()).To(gomega.Equal(localheader["hash"].(string)))
-		g.Expect(err).To(gomega.BeNil(), "Unequal results")
+		mockHeaderResult, err := interfaceToMapString(mockResult["header"])
+		g.Expect(err).To(gomega.BeNil(), "mockHeaderResult interfaceToMapString failed")
+
+		g.Expect(info.Header.Hash.String()).To(gomega.Equal(mockHeaderResult["hash"].(string)), "Unequal results")
 		fmt.Println(info.Header.Hash.String())
-		fmt.Println(localheader["hash"])
+		fmt.Println(mockHeaderResult["hash"])
 
 	})
 

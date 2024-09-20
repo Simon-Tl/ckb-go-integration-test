@@ -13,14 +13,15 @@ func TestTxPoolInfo(t *testing.T) {
 
 		println("Running test case:", t.Name()) // Identifiable marker
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client") // Identifiable description for the expectation
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName faileds") // Identifiable description for the expectation
 
 		info, err := client.TxPoolInfo(context.Background())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while fetching TxPoolInfo")
-		localresult, err := interfaceToMapString(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "TxPoolInfo failed")
+
+		mockResult, err := interfaceToMapString(mockData.Response.Result)
 		g.Expect(err).To(gomega.BeNil(), "interfaceToMapString failed")
 		// Description with marker
-		g.Expect(info.TipHash.Hex()).To(gomega.Equal(localresult["tip_hash"]),
-			"Expected TipHash to match mock data") // Description added for clarity
+		g.Expect(info.TipHash.Hex()).To(gomega.Equal(mockResult["tip_hash"]),
+			"Result Unequal") // Description added for clarity
 	})
 }

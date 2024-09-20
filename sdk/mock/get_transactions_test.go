@@ -9,25 +9,28 @@ import (
 	"testing"
 )
 
+// get_transactions   SearchKey 多出来的WithData 导致无法返回
 func TestGetTransactions(t *testing.T) {
 
 	t.Run("get_transactions/[search_key,order,limit,null]", func(t *testing.T) {
 		g := gomega.NewGomegaWithT(t) // Initialize Gomega
 		println(t.Name())
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client")
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed")
 		// Identifiable description for the expectation		fmt.Println(mockData.Request.Params)
 
-		Parmsscript, err := interfaceToMapString(mockData.Request.Params[0])
-		g.Expect(err).To(gomega.BeNil(), "Parmsscript parser failed")
+		Params, err := interfaceToMapString(mockData.Request.Params[0])
+		g.Expect(err).To(gomega.BeNil(), "Params interfaceToMapString failed")
 
-		scripts, err := interfaceToMapString(Parmsscript["script"])
-		args, err := interfaceToBytes(scripts["args"])
-		g.Expect(err).To(gomega.BeNil(), "args parser failed")
+		ParamsScript, err := interfaceToMapString(Params["script"])
+		g.Expect(err).To(gomega.BeNil(), "ParamsScript interfaceToMapString failed")
+
+		ParamsScriptArgs, err := interfaceToBytes(ParamsScript["args"])
+		g.Expect(err).To(gomega.BeNil(), "ParamsScriptArgs interfaceToBytes failed")
 		script := types.Script{
-			CodeHash: types.HexToHash(scripts["code_hash"].(string)),
+			CodeHash: types.HexToHash(ParamsScript["code_hash"].(string)),
 			HashType: types.HashTypeType,
-			Args:     args,
+			Args:     ParamsScriptArgs,
 		}
 
 		indexerSearchKey := indexer.SearchKey{
@@ -48,23 +51,4 @@ func TestGetTransactions(t *testing.T) {
 
 	})
 
-	t.Run("get_block_hash/null", func(t *testing.T) {
-		g := gomega.NewGomegaWithT(t) // Initialize Gomega
-		println(t.Name())
-		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client")
-		// Identifiable description for the expectation		fmt.Println(mockData.Request.Params)
-
-		Parms, err := interfaceToUint(mockData.Request.Params[0])
-		ParmUint64 := uint64(Parms)
-		info, err := client.GetBlockHash(context.Background(), ParmUint64)
-		g.Expect(err).To(gomega.BeNil(), "GetBlockHash failed")
-		fmt.Println(info)
-		if mockData.Response.Result == nil {
-			mockData.Response.Result = "0x0000000000000000000000000000000000000000000000000000000000000000"
-			g.Expect(info.Hex()).To(gomega.Equal(mockData.Response.Result))
-		}
-		//g.Expect(info.Hex()).To(gomega.Equal(mockData.Response.Result.(string)))
-
-	})
 }

@@ -13,10 +13,11 @@ func TestRemoveNode(t *testing.T) {
 
 		println("Running test case:", t.Name()) // Identifiable marker
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client") // Identifiable description for the expectation
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed") // Identifiable description for the expectation
 
 		info := client.RemoveNode(context.Background(), mockData.Request.Params[0].(string))
-		g.Expect(info).To(gomega.BeNil(), "Expected no error while fetching SetNetworkActive")
+		g.Expect(info).To(gomega.BeNil(), "RemoveNode failed")
+		g.Expect(mockData.Response.Result).To(gomega.BeNil(), "mockData result error")
 		// Description with marker
 	})
 }

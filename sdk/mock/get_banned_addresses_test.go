@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"fmt"
 	"github.com/onsi/gomega"
 	"testing"
 )
@@ -13,14 +12,15 @@ func TestGetBannedAddresses(t *testing.T) {
 		g := gomega.NewGomegaWithT(t) // Initialize Gomega
 		println(t.Name())
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client")
-		// Identifiable description for the expectation		fmt.Println(mockData.Request.Params)
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed")
 
-		localresult, err := interfaceToMapString(mockData.Response.Result)
+		mockResult, err := interfaceToMapString(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString failed")
+
 		info, err := client.GetBannedAddresses(context.Background())
-		fmt.Println(info[0].Address)
-		fmt.Println(localresult)
-		g.Expect(info[0].Address).To(gomega.Equal(localresult["address"]))
+		g.Expect(err).To(gomega.BeNil(), "GetBannedAddresses failed")
+
+		g.Expect(info[0].Address).To(gomega.Equal(mockResult["address"]), "Result Unequal")
 
 	})
 }

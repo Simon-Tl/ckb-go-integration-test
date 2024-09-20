@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"github.com/onsi/gomega"
-	"strconv"
 	"testing"
 )
 
@@ -16,13 +15,13 @@ func TestCalculateDaoMaximumWithdraw(t *testing.T) {
 
 		println("Running test case:", t.Name()) // Identifiable marker
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client") // Identifiable description for the expectation
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed") // Identifiable description for the expectation
 
 		pointMap, err := interfaceSliceToMapString(mockData.Request.Params)
 		g.Expect(err).To(gomega.BeNil(), "pointMap interfaceSliceToMapString failed ")
 
-		indexuint, err := interfaceToUint(pointMap["index"])
-		index32 := uint32(indexuint)
+		indexUint, err := interfaceToUint(pointMap["index"])
+		index32 := uint32(indexUint)
 
 		point := types.OutPoint{
 			TxHash: types.HexToHash(pointMap["tx_hash"].(string)),
@@ -30,10 +29,10 @@ func TestCalculateDaoMaximumWithdraw(t *testing.T) {
 		}
 
 		info, err := client.CalculateDaoMaximumWithdraw(context.Background(), &point, types.HexToHash(mockData.Request.Params[1].(string)))
-		hexString := "0x" + strconv.FormatUint(info, 16)
-		fmt.Println(hexString)
-		fmt.Println(mockData.Response.Result.(string))
-		g.Expect(hexString).To(gomega.Equal(mockData.Response.Result.(string)), "Unequal results")
+		mockResult, err := interfaceToUint(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToUint failed ")
+
+		g.Expect(info).To(gomega.Equal(uint64(mockResult)), "Unequal results")
 		// Description with marker
 	})
 
@@ -42,7 +41,7 @@ func TestCalculateDaoMaximumWithdraw(t *testing.T) {
 
 		println("Running test case:", t.Name()) // Identifiable marker
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client") // Identifiable description for the expectation
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed") // Identifiable description for the expectation
 
 		pointMap, err := interfaceSliceToMapString(mockData.Request.Params)
 		g.Expect(err).To(gomega.BeNil(), "pointMap interfaceSliceToMapString failed ")
@@ -58,11 +57,11 @@ func TestCalculateDaoMaximumWithdraw(t *testing.T) {
 		_, errmesg := client.CalculateDaoMaximumWithdraw(context.Background(), &point, types.HexToHash(mockData.Request.Params[1].(string)))
 		errMesg, err := interfaceToMapString(mockData.Response.Error)
 		g.Expect(err).To(gomega.BeNil(), "errMesg interfaceToMapString failed")
+
 		fmt.Println(errMesg["message"].(string))
 		fmt.Println(errmesg.Error())
 
 		g.Expect(errmesg.Error()).To(gomega.Equal(errMesg["message"].(string)))
 
-		// Description with marker
 	})
 }

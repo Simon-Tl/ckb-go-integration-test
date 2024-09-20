@@ -14,25 +14,24 @@ func TestGetEpochByNumber(t *testing.T) {
 
 		println("Running test case:", t.Name()) // Identifiable marker
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client") // Identifiable description for the expectation
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed") // Identifiable description for the expectation
 
-		number, err := interfaceToUint(mockData.Request.Params[0])
+		mockParams, err := interfaceToUint(mockData.Request.Params[0])
 		g.Expect(err).To(gomega.BeNil(), "number parser faild") // Identifiable description for the expectation
 
-		umber64 := uint64(number)
+		info, err := client.GetEpochByNumber(context.Background(), uint64(mockParams))
+		g.Expect(err).To(gomega.BeNil(), "GetEpochByNumber failed")
 
-		info, err := client.GetEpochByNumber(context.Background(), umber64)
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while fetching GetEpochByNumber")
+		mockResult, err := interfaceToMapString(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString failed")
 
-		localresult, err := interfaceToMapString(mockData.Response.Result)
-		g.Expect(err).To(gomega.BeNil(), "localresult parser failed")
-		compact_target, err := interfaceToUint(localresult["compact_target"])
-		g.Expect(err).To(gomega.BeNil(), "compact_target parser failed")
+		mockCompactTargetResult, err := interfaceToUint(mockResult["compact_target"])
+		g.Expect(err).To(gomega.BeNil(), "mockCompactTargetResult  interfaceToUint failed")
 
 		fmt.Println(info.CompactTarget)
-		fmt.Println(uint64(compact_target))
+		fmt.Println(uint64(mockCompactTargetResult))
 
-		g.Expect(info.CompactTarget).To(gomega.Equal(compact_target), "result unequal")
+		g.Expect(info.CompactTarget).To(gomega.Equal(uint64(mockCompactTargetResult)), "Result Unequal")
 		// Description with marker
 	})
 }

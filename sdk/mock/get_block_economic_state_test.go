@@ -19,12 +19,12 @@ func TestGetBlockEconomicState(t *testing.T) {
 		info, err := client.GetBlockEconomicState(context.Background(), hash)
 		g.Expect(err).To(gomega.BeNil(), "GetBlockEconomicState failed")
 
-		localresult, err := interfaceToMapString(mockData.Response.Result)
-		g.Expect(err).To(gomega.BeNil(), "interfaceToMapString failed")
+		mockResult, err := interfaceToMapString(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString failed")
 
-		g.Expect(info.FinalizedAt.String()).To(gomega.Equal(localresult["finalized_at"]))
+		g.Expect(info.FinalizedAt.String()).To(gomega.Equal(mockResult["finalized_at"]), "Result Unequal")
 		fmt.Println(info.FinalizedAt)
-		fmt.Println(localresult["finalized_at"])
+		fmt.Println(mockResult["finalized_at"])
 
 	})
 

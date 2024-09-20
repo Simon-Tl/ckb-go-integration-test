@@ -24,6 +24,12 @@ type Request struct {
 	Params  []interface{} `json:"params"`
 }
 
+type RequestParamsNil struct {
+	ID      string `json:"id"`
+	JSONRPC string `json:"jsonrpc"`
+	Method  string `json:"method"`
+}
+
 type Response struct {
 	ID      string      `json:"id"`
 	JSONRPC string      `json:"jsonrpc"`
@@ -84,7 +90,7 @@ func parseCellDeps(cellDepsInterface interface{}) ([]*types.CellDep, error) {
 		}
 		celldep := types.CellDep{
 			OutPoint: &outpoint,
-			DepType:  types.DepTypeDepGroup, // 假设为 dep_group 类型
+			DepType:  types.DepType(celldepmap["dep_type"].(string)), // 假设为 dep_group 类型
 		}
 		celldepList = append(celldepList, &celldep)
 	}
@@ -147,38 +153,81 @@ func parseOutputs(outputsInterface interface{}) ([]*types.CellOutput, error) {
 	if !ok {
 		return nil, fmt.Errorf("parseOutputs failed: expected []interface{}, got %T", outputsInterface)
 	}
+
 	for _, output := range outputSlice {
 		if output == nil {
 			continue
 		}
+
+		// 将 output 转换为 map[string]interface{}
 		outputmap, err := interfaceToMapString(output)
 		if err != nil {
 			return nil, fmt.Errorf("parseOutputs failed: %w", err)
 		}
-		lockmap, err := interfaceToMapString(outputmap["lock"])
-		if err != nil {
-			return nil, fmt.Errorf("parseOutputs failed: %w", err)
+
+		// 处理 lock
+		var lock *types.Script
+		if lockData, ok := outputmap["lock"]; ok && lockData != nil {
+			lockmap, err := interfaceToMapString(lockData)
+			if err != nil {
+				return nil, fmt.Errorf("parseOutputs failed: %w", err)
+			}
+
+			args, err := interfaceToBytes(lockmap["args"])
+			if err != nil {
+				return nil, fmt.Errorf("parseOutputs failed: %w", err)
+			}
+
+			lock = &types.Script{
+				CodeHash: types.HexToHash(lockmap["code_hash"].(string)),
+				HashType: types.ScriptHashType(lockmap["hash_type"].(string)),
+				Args:     args,
+			}
+		} else {
+			// 如果 lock 为空，返回错误或根据需求处理
+			return nil, fmt.Errorf("parseOutputs failed: lock is nil for one of the outputs")
 		}
-		args, err := interfaceToBytes(lockmap["args"])
-		if err != nil {
-			return nil, fmt.Errorf("parseOutputs failed: %w", err)
+
+		// 处理 type（可以为空）
+		var outputType *types.Script
+		if typeData, ok := outputmap["type"]; ok && typeData != nil {
+			typesmap, err := interfaceToMapString(typeData)
+			if err != nil {
+				return nil, fmt.Errorf("parseOutputs failed: %w", err)
+			}
+
+			typesargs, err := interfaceToBytes(typesmap["args"])
+			if err != nil {
+				return nil, fmt.Errorf("parseOutputs failed: %w", err)
+			}
+
+			outputType = &types.Script{
+				CodeHash: types.HexToHash(typesmap["code_hash"].(string)),
+				HashType: types.ScriptHashType(typesmap["hash_type"].(string)),
+				Args:     typesargs,
+			}
+		} else {
+			// 如果 type 为空，保持为 nil
+			outputType = nil
 		}
-		lock := types.Script{
-			CodeHash: types.HexToHash(lockmap["code_hash"].(string)),
-			HashType: types.ScriptHashType(lockmap["hash_type"].(string)),
-			Args:     args,
-		}
+
+		// 处理 capacity
 		capacity, err := interfaceToUint(outputmap["capacity"])
 		if err != nil {
 			return nil, fmt.Errorf("parseOutputs failed: %w", err)
 		}
+
+		// 构造 CellOutput
 		cellOutput := types.CellOutput{
 			Capacity: uint64(capacity),
-			Lock:     &lock,
-			Type:     nil, // 假设 Type 为 nil
+			Lock:     lock,
+			Type:     outputType, // Type 允许为 nil
 		}
+
+		// 将 cellOutput 加入到输出列表中
 		outputList = append(outputList, &cellOutput)
 	}
+
 	return outputList, nil
 }
 
@@ -288,6 +337,21 @@ func compareKeys(localResult map[string]interface{}, structKeys []string) error 
 	return nil
 }
 
+func interfaceSliceToStringSlice(data []interface{}) ([]string, error) {
+	// 创建一个和data等长的string切片
+	strSlice := make([]string, len(data))
+	for i, v := range data {
+		// 尝试将interface{}转换为string
+		if str, ok := v.(string); ok {
+			strSlice[i] = str
+		} else {
+			// 如果某个元素不是string类型，则返回错误
+			return nil, fmt.Errorf("item %d is not of type string, got %T", i, v)
+		}
+	}
+	return strSlice, nil
+}
+
 func interfaceSliceToMapString(i []interface{}) (map[string]interface{}, error) {
 	// 检查切片是否为空，避免越界访问
 	if len(i) == 0 {
@@ -341,7 +405,29 @@ func interfaceToMapString(i interface{}) (map[string]interface{}, error) {
 
 func interfaceToHashSlice(data interface{}) ([]types.Hash, error) {
 	if data == nil {
-		return []types.Hash{}, nil // 返回空的 []types.Hash
+		return []types.Hash{}, nil // 返回空的 []Hash
+	}
+
+	// 尝试将 interface{} 转换为 []string
+	if stringSlice, ok := data.([]string); ok {
+		hashes := make([]types.Hash, len(stringSlice))
+		for i, str := range stringSlice {
+			if len(str) < 2 || str[:2] != "0x" {
+				return nil, fmt.Errorf("item %d is not a valid hex string with '0x' prefix", i)
+			}
+			// 移除 "0x" 前缀并将 hex 字符串转为 []byte
+			byteArray, err := hex.DecodeString(str[2:])
+			if err != nil {
+				return nil, fmt.Errorf("item %d is not a valid hex string: %v", i, err)
+			}
+			if len(byteArray) != 32 {
+				return nil, fmt.Errorf("item %d does not have length 32, length is %d", i, len(byteArray))
+			}
+			var hash types.Hash
+			copy(hash[:], byteArray)
+			hashes[i] = hash
+		}
+		return hashes, nil
 	}
 
 	// 尝试将 interface{} 转换为 [][]byte
@@ -351,14 +437,15 @@ func interfaceToHashSlice(data interface{}) ([]types.Hash, error) {
 			if len(byteArray) != 32 {
 				return nil, fmt.Errorf("item %d does not have length 32, length is %d", i, len(byteArray))
 			}
-			copy(hashes[i][:], byteArray)
+			var hash types.Hash
+			copy(hash[:], byteArray)
+			hashes[i] = hash
 		}
 		return hashes, nil
 	}
 
 	// 尝试将 interface{} 转换为 []interface{}
 	if slice, ok := data.([]interface{}); ok {
-		// 将 []interface{} 转换为 [][]byte
 		byteSlices := make([][]byte, len(slice))
 		for i, item := range slice {
 			if byteArray, ok := item.([]byte); ok {
@@ -366,20 +453,34 @@ func interfaceToHashSlice(data interface{}) ([]types.Hash, error) {
 					return nil, fmt.Errorf("item %d does not have length 32, length is %d", i, len(byteArray))
 				}
 				byteSlices[i] = byteArray
+			} else if str, ok := item.(string); ok {
+				// 将字符串转换为 []byte
+				if len(str) < 2 || str[:2] != "0x" {
+					return nil, fmt.Errorf("item %d is not a valid hex string with '0x' prefix", i)
+				}
+				byteArray, err := hex.DecodeString(str[2:])
+				if err != nil {
+					return nil, fmt.Errorf("item %d is not a valid hex string: %v", i, err)
+				}
+				if len(byteArray) != 32 {
+					return nil, fmt.Errorf("item %d does not have length 32, length is %d", i, len(byteArray))
+				}
+				byteSlices[i] = byteArray
 			} else {
-				return nil, fmt.Errorf("item %d is not of type []byte", i)
+				return nil, fmt.Errorf("item %d is not of type []byte or string", i)
 			}
 		}
-		// 转换为 []types.Hash
 		hashes := make([]types.Hash, len(byteSlices))
 		for i, byteArray := range byteSlices {
-			copy(hashes[i][:], byteArray)
+			var hash types.Hash
+			copy(hash[:], byteArray)
+			hashes[i] = hash
 		}
 		return hashes, nil
 	}
 
 	// 提供更详细的错误信息
-	return nil, fmt.Errorf("interface{} is not of type [][]byte or []interface{}, got %T", data)
+	return nil, fmt.Errorf("interface{} is not of type []string, [][]byte, or []interface{}, got %T", data)
 }
 
 func interfaceToUint(data interface{}) (uint, error) {

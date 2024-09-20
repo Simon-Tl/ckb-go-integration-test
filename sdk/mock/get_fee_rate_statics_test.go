@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+// 传入方法名不一致mock方法get_fee_rate_statics sdk传入get_fee_rate_statistics
+
 func TestGetFeeRateStatics(t *testing.T) {
 
 	t.Run("get_fee_rate_statics/[null]", func(t *testing.T) {
@@ -13,14 +15,15 @@ func TestGetFeeRateStatics(t *testing.T) {
 
 		println("Running test case:", t.Name()) // Identifiable marker
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client") // Identifiable description for the expectation
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed") // Identifiable description for the expectation
 
 		info, err := client.GetFeeRateStatistics(context.Background(), nil)
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while fetching GetFeeRateStatistics")
-		localresult, err := interfaceToMapString(mockData.Response.Result)
-		g.Expect(err).To(gomega.BeNil(), "interfaceToMapString failed")
+		g.Expect(err).To(gomega.BeNil(), "GetFeeRateStatistics failed")
+
+		mockResult, err := interfaceToMapString(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString failed")
 		// Description with marker
-		g.Expect(info.Mean).To(gomega.Equal(localresult["mean"]),
-			"Expected TipHash to match mock data") // Description added for clarity
+		g.Expect(info.Mean).To(gomega.Equal(mockResult["mean"]),
+			"Result Unequal") // Description added for clarity
 	})
 }

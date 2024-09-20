@@ -14,15 +14,16 @@ func TestGetIndexerTip(t *testing.T) {
 
 		println("Running test case:", t.Name()) // Identifiable marker
 		client, mockData, err := getMockRpcClientByName(t.Name())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while getting mock RPC client") // Identifiable description for the expectation
+		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed") // Identifiable description for the expectation
 
 		info, err := client.GetIndexerTip(context.Background())
-		g.Expect(err).To(gomega.BeNil(), "Expected no error while fetching GetIndexerTip")
-		localresult, err := interfaceToMapString(mockData.Response.Result)
-		g.Expect(err).To(gomega.BeNil(), "interfaceToMapString failed")
-		// Description with marker
-		g.Expect(info.BlockHash.Hex()).To(gomega.Equal(localresult["block_hash"]),
-			"Expected BlockHash to match mock data")
+		g.Expect(err).To(gomega.BeNil(), "GetIndexerTip failed")
+
+		mockResult, err := interfaceToMapString(mockData.Response.Result)
+		g.Expect(err).To(gomega.BeNil(), "mockResult interfaceToMapString failed")
+
+		g.Expect(info.BlockHash.Hex()).To(gomega.Equal(mockResult["block_hash"]),
+			"Result Unequal")
 		fmt.Println(info) // Description added for clarity
 	})
 }
