@@ -1,12 +1,13 @@
 module github.com/cryptape/ckb-go-integration-test
 
-replace github.com/nervosnetwork/ckb-sdk-go/v2 => github.com/simon-tl/ckb-sdk-go/v2 v2.2.1-0.20240904094438-49c3326380d8
+// replace github.com/nervosnetwork/ckb-sdk-go/v2 => github.com/simon-tl/ckb-sdk-go/v2 v2.2.1-0.20240904094438-49c3326380d8
 
 go 1.18
 
 require (
-	github.com/nervosnetwork/ckb-sdk-go/v2 v2.2.0
+	github.com/nervosnetwork/ckb-sdk-go/v2 v2.3.0
 	github.com/onsi/gomega v1.34.1
+	golang.org/x/net v0.28.0
 )
 
 require (
@@ -23,7 +24,6 @@ require (
 	github.com/tklauser/numcpus v0.2.2 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948 // indirect
-	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
