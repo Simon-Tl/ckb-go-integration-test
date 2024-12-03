@@ -2,9 +2,11 @@ package mock
 
 import (
 	"context"
+	"fmt"
+	"testing"
+
 	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"github.com/onsi/gomega"
-	"testing"
 )
 
 //sync_state 缺少“tip_number，unverified_tip_number，tip_hash，unverified_tip_hash”
@@ -19,6 +21,7 @@ func TestSyncState(t *testing.T) {
 		g.Expect(err).To(gomega.BeNil(), "getMockRpcClientByName failed")
 
 		info, err := client.SyncState(context.Background())
+		fmt.Println(info.TipNumber, info.UnverifiedTipNumber, info.TipHash, info.UnverifiedTipHash)
 		g.Expect(err).To(gomega.BeNil(), "client.GetBlock failed")
 
 		mockResult, err := interfaceToMapString(mockData.Response.Result)
