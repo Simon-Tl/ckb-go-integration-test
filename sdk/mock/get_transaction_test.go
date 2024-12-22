@@ -3,9 +3,10 @@ package mock
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"github.com/onsi/gomega"
-	"testing"
 )
 
 // get_transaction 缺少verbosity 参数，导致无法返回
@@ -20,7 +21,8 @@ func TestGetTransaction(t *testing.T) {
 
 		Hash := mockData.Request.Params[0]
 
-		info, err := client.GetTransaction(context.Background(), types.HexToHash(Hash.(string)), nil)
+		info, err := client.GetTransaction(context.Background(), types.HexToHash(Hash.(string)),nil,nil)
+		g.Expect(err).To(gomega.BeNil(),"GetTransaction failed")
 		fmt.Println(*info.Cycles)
 
 		// Description with marker

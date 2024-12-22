@@ -5,10 +5,12 @@ module github.com/cryptape/ckb-go-integration-test
 go 1.18
 
 require (
-	github.com/nervosnetwork/ckb-sdk-go/v2 v2.3.0
+	github.com/nervosnetwork/ckb-sdk-go/v2 v2.0.0-00010101000000-000000000000
 	github.com/onsi/gomega v1.34.1
 	golang.org/x/net v0.28.0
 )
+
+replace github.com/nervosnetwork/ckb-sdk-go/v2 => github.com/simon-tl/ckb-sdk-go/v2 v2.2.1-0.20241217044448-e64b98f3d7e7
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect

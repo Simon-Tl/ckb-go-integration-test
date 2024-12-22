@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/nervosnetwork/ckb-sdk-go/v2/rpc"
-	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 	"io"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/nervosnetwork/ckb-sdk-go/v2/rpc"
+	"github.com/nervosnetwork/ckb-sdk-go/v2/types"
 )
 
 const BASE_MOCK_URL = "http://127.0.0.1:5000/test/"
@@ -106,6 +107,253 @@ func parseHeaderDeps(headerDepsInterface interface{}) ([]types.Hash, error) {
 	return headerDeps, nil
 }
 
+//公共函数: 解析 cellbase
+
+// 公共函数：解析 Cellbase
+func parseCellbase(cellbaseInterface interface{}) (*types.CellbaseTemplate, error) {
+	cellbaseMap, err := interfaceToMapString(cellbaseInterface)
+	if err != nil {
+		return nil, fmt.Errorf("parseCellbase failed: %w", err)
+	}
+
+	hash, err := parseHash(cellbaseMap["hash"])
+	if err != nil {
+		return nil, fmt.Errorf("parseCellbase failed: %w", err)
+	}
+
+	cycles, err := parseCycles(cellbaseMap["cycles"])
+	if err != nil {
+		return nil, fmt.Errorf("parseCellbase failed: %w", err)
+	}
+
+	data, err := parseTransaction(cellbaseMap["data"])
+	if err != nil {
+		return nil, fmt.Errorf("parseCellbase failed: %w", err)
+	}
+
+	return &types.CellbaseTemplate{
+		Hash:   hash,
+		Cycles: cycles,
+		Data:   data,
+	}, nil
+}
+
+// 辅助函数：解析 hash 字段
+func parseHash(data interface{}) (types.Hash, error) {
+	hashStr, ok := data.(string)
+	if !ok {
+		return types.Hash{}, fmt.Errorf("parseHash failed: expected string, got %T", data)
+	}
+	return types.HexToHash(hashStr), nil
+}
+
+// 辅助函数：解析 cycles 字段
+func parseCycles(data interface{}) (*uint64, error) {
+	if data == nil {
+		return nil, nil
+	}
+	cycles, err := interfaceToUint(data)
+	if err != nil {
+		return nil, fmt.Errorf("parseCycles failed: %w", err)
+	}
+	cyclesPtr := uint64(cycles)
+	return &cyclesPtr, nil
+}
+
+func parseUncles(data interface{}) ([]types.UncleTemplate, error) {
+	// 填充代码解析 Uncles 列表
+	return nil, nil // 示例返回
+}
+
+func parseProposals(data interface{}) ([]string, error) {
+	stringSlice, ok := data.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("parseProposals failed: expected []interface{}, got %T", data)
+	}
+	proposals := make([]string, len(stringSlice))
+	for i, v := range stringSlice {
+		str, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("parseProposals failed: expected string, got %T", v)
+		}
+		proposals[i] = str
+	}
+	return proposals, nil
+}
+
+func parseExtension(data interface{}) *json.RawMessage {
+
+	if data == nil {
+		return nil
+	}
+	raw, ok := data.(string)
+	if !ok {
+		return nil
+	}
+	jsonString := fmt.Sprintf("\"%s\"", raw)
+
+	msg := json.RawMessage(jsonString)
+	fmt.Println(msg)
+
+	return &msg
+}
+
+func parseTransactions(data interface{}) ([]types.TransactionTemplate, error) {
+	// 填充代码解析 Transactions 列表
+	return nil, nil // 示例返回
+}
+
+func parseBlockTemplate(data []interface{}) (types.BlockTemplate, error) {
+
+	dataMap, err := interfaceSliceToMapString(data)
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate dataMap failed: %w", err)
+	}
+
+	version, err := interfaceToUint(dataMap["version"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate version failed: %w", err)
+	}
+
+	compactTarget, err := interfaceToUint(dataMap["compact_target"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate compact_target failed: %w", err)
+	}
+
+	currentTime, err := interfaceToUint(dataMap["current_time"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate  current_time failed: %w", err)
+	}
+
+	number, err := interfaceToUint(dataMap["number"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate number failed: %w", err)
+	}
+
+	epoch, err := interfaceToUint(dataMap["epoch"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate epoch failed: %w", err)
+	}
+
+	parentHash := types.HexToHash(dataMap["parent_hash"].(string))
+
+	cyclesLimit, err := interfaceToUint(dataMap["cycles_limit"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate cycles_limit failed: %w", err)
+	}
+
+	bytesLimit, err := interfaceToUint(dataMap["bytes_limit"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate bytes_limit failed: %w", err)
+	}
+
+	unclesCountLimit, err := interfaceToUint(dataMap["uncles_count_limit"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate failed: %w", err)
+	}
+
+	uncles, err := parseUncles(dataMap["uncles"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate failed: %w", err)
+	}
+
+	transactions, err := parseTransactions(dataMap["transactions"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate failed: %w", err)
+	}
+
+	proposals, err := parseProposals(dataMap["proposals"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate failed: %w", err)
+	}
+
+	cellbase, err := parseCellbase(dataMap["cellbase"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate failed: %w", err)
+	}
+
+	workId, err := interfaceToUint(dataMap["work_id"])
+	if err != nil {
+		return types.BlockTemplate{}, fmt.Errorf("parseBlockTemplate failed: %w", err)
+	}
+
+	dao := types.HexToHash(dataMap["dao"].(string))
+
+	extension := parseExtension(dataMap["extension"])
+
+	return types.BlockTemplate{
+		Version:          uint32(version),
+		CompactTarget:    uint32(compactTarget),
+		CurrentTime:      uint64(currentTime),
+		Number:           uint64(number),
+		Epoch:            uint64(epoch),
+		ParentHash:       parentHash,
+		CyclesLimit:      uint64(cyclesLimit),
+		BytesLimit:       uint64(bytesLimit),
+		UnclesCountLimit: uint64(unclesCountLimit),
+		Uncles:           uncles,
+		Transactions:     transactions,
+		Proposals:        proposals,
+		Cellbase:         *cellbase,
+		WorkId:           uint64(workId),
+		Dao:              dao,
+		Extension:        extension,
+	}, nil
+}
+
+// 辅助函数：解析 data (Transaction)
+func parseTransaction(data interface{}) (types.Transaction, error) {
+	transactionMap, err := interfaceToMapString(data)
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	cellDeps, err := parseCellDeps(transactionMap["cell_deps"])
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	headerDeps, err := parseHeaderDeps(transactionMap["header_deps"])
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	inputs, err := parseInputs(transactionMap["inputs"])
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	outputs, err := parseOutputs(transactionMap["outputs"])
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	outputsData, err := parseOutputsData(transactionMap["outputs_data"])
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	version, err := parseVersion(transactionMap["version"])
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	witnesses, err := parseWitnesses(transactionMap["witnesses"])
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("parseTransaction failed: %w", err)
+	}
+
+	return types.Transaction{
+		CellDeps:    cellDeps,
+		HeaderDeps:  headerDeps,
+		Inputs:      inputs,
+		Outputs:     outputs,
+		OutputsData: outputsData,
+		Version:     version,
+		Witnesses:   witnesses,
+	}, nil
+}
+
 // 公共函数：解析 inputs
 func parseInputs(inputsInterface interface{}) ([]*types.CellInput, error) {
 	inputList := make([]*types.CellInput, 0)
@@ -144,6 +392,23 @@ func parseInputs(inputsInterface interface{}) ([]*types.CellInput, error) {
 		inputList = append(inputList, &cellInput)
 	}
 	return inputList, nil
+}
+
+func parseOutputsData(data interface{}) ([][]byte, error) {
+	stringSlice, ok := data.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("parseOutputsData failed: expected []interface{}, got %T", data)
+	}
+
+	result := make([][]byte, len(stringSlice))
+	for i, v := range stringSlice {
+		str, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("parseOutputsData failed: expected string, got %T", v)
+		}
+		result[i] = []byte(str)
+	}
+	return result, nil
 }
 
 // 公共函数：解析 outputs
